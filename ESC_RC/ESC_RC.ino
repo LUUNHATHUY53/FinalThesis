@@ -69,15 +69,24 @@ void setup(){
   PCMSK0 |= (1 << PCINT1);                                                  //Set PCINT1 (digital input 9)to trigger an interrupt on state change.
   PCMSK0 |= (1 << PCINT2);                                                  //Set PCINT2 (digital input 10)to trigger an interrupt on state change.
   PCMSK0 |= (1 << PCINT3);                                                  //Set PCINT3 (digital input 11)to trigger an interrupt on state change.
+	
+    pid_i_mem_roll = 0;
+    pid_last_roll_d_error = 0;
+    pid_i_mem_pitch = 0;
+    pid_last_pitch_d_error = 0;
+    pid_i_mem_yaw = 0;
+    pid_last_yaw_d_error = 0;
+	
+  
 
-  while(receiver_input_channel_3 < 990 || receiver_input_channel_3 > 1020 || receiver_input_channel_4 < 1400){
+  /*while(receiver_input_channel_3 < 990 || receiver_input_channel_3 > 1020 || receiver_input_channel_4 < 1400){
     receiver_input_channel_3 = convert_receiver_channel(3);                 //Convert the actual receiver signals for throttle to the standard 1000 - 2000us
     receiver_input_channel_4 = convert_receiver_channel(4);                 //Convert the actual receiver signals for yaw to the standard 1000 - 2000us
     start ++;
     if(start == 125){                                                       //Every 125 loops (500ms).
       start = 0;                                                            //Start again at 0.
     }
-  }
+  }*/
   //Load the battery voltage to the battery_voltage variable.
   //65 is the voltage compensation for the diode.
   //12.6V equals ~5V @ Analog 0.
@@ -144,7 +153,7 @@ void loop(){
   Serial.print("receiver_input_channel_3: ");Serial.print(receiver_input_channel_3);Serial.print("\t");
   Serial.print("receiver_input_channel_4: ");Serial.print(receiver_input_channel_4);Serial.print("\n");
   //For starting the motors: throttle low and yaw left (step 1).
-  if(receiver_input_channel_3 < 1050 && receiver_input_channel_4 < 1050)start = 1;
+  /*if(receiver_input_channel_3 < 1050 && receiver_input_channel_4 < 1050)start = 1;
   
   
   //When yaw stick is back in the center position start the motors (step 2).
@@ -162,7 +171,7 @@ void loop(){
     pid_last_yaw_d_error = 0;
   }
   //Stopping the motors: throttle low and yaw right.
-  if(start == 2 && receiver_input_channel_3 < 1050 && receiver_input_channel_4 > 1950)start = 0;
+  if(start == 2 && receiver_input_channel_3 < 1050 && receiver_input_channel_4 > 1950)start = 0;*/
 
   //The PID set point in degrees per second is determined by the roll receiver input.
   //In the case of deviding by 3 the max roll rate is aprox 164 degrees per second ( (500-8)/3 = 164d/s ).
@@ -199,7 +208,7 @@ void loop(){
   //0.09853 = 0.08 * 1.2317.
   battery_voltage = battery_voltage * 0.92 + (analogRead(0) + 65) * 0.09853;
   throttle = receiver_input_channel_3;                                      //We need the throttle signal as a base signal.
-  if (start == 2){                                                          //The motors are started.
+  //if (start == 2){                                                          //The motors are started.
     if (throttle > 1800) throttle = 1800;                                   //We need some room to keep full control at full throttle.
     esc_1 = throttle - pid_output_pitch + pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 1 (front-right - CCW)
     esc_2 = throttle + pid_output_pitch + pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 2 (rear-right - CW)
@@ -222,14 +231,14 @@ void loop(){
     if(esc_2 > 2000)esc_2 = 2000;                                           //Limit the esc-2 pulse to 2000us.
     if(esc_3 > 2000)esc_3 = 2000;                                           //Limit the esc-3 pulse to 2000us.
     if(esc_4 > 2000)esc_4 = 2000;                                           //Limit the esc-4 pulse to 2000us.  
-  }
+  //}
 
-  else{
-    esc_1 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-1.
-    esc_2 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-2.
-    esc_3 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-3.
-    esc_4 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-4.
-  }
+  //else{
+   //esc_1 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-1.
+   //esc_2 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-2.
+   //esc_3 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-3.
+   //esc_4 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-4.
+  //}
   //All the information for controlling the motor's is available.
   //The refresh rate is 250Hz. That means the esc's need there pulse every 4ms.
   while(micros() - loop_timer < 4000);                                      //We wait until 4000us are passed.
@@ -254,7 +263,11 @@ void gyro_signalen(){
     Wire.write(0x3B);                                                       //Start reading @ register 43h and auto increment with every read.
     Wire.endTransmission();                                                 //End the transmission.
     Wire.requestFrom(0x68,14);                                      //Request 14 bytes from the gyro.
-	
+    
+    receiver_input_channel_1 = convert_receiver_channel(1);                 //Convert the actual receiver signals for pitch to the standard 1000 - 2000us.
+    receiver_input_channel_2 = convert_receiver_channel(2);                 //Convert the actual receiver signals for roll to the standard 1000 - 2000us.
+    receiver_input_channel_3 = convert_receiver_channel(3);                 //Convert the actual receiver signals for throttle to the standard 1000 - 2000us.
+    receiver_input_channel_4 = convert_receiver_channel(4);                 //Convert the actual receiver signals for yaw to the standard 1000 - 2000us.
 
    
     while(Wire.available() < 14);                                           //Wait until the 14 bytes are received.
