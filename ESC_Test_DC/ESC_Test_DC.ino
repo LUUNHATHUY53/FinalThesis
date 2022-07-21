@@ -5,15 +5,15 @@ void setup(){
   Wire.begin();
   //TWBR = 12;
   
-  //DDRD |= B11110000;
+  DDRD |= B11110000;
   analogWrite(5, 191);
-  pinMode(6, OUTPUT);
+  //pinMode(4, OUTPUT);
  }
  
 void loop(){
-    digitalWrite(6, HIGH);
+    digitalWrite(4, HIGH);
     delayMicroseconds(600);
-    digitalWrite(6, LOW);
+    digitalWrite(4, LOW);
     delayMicroseconds(300);
     
 }
