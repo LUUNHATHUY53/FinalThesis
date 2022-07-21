@@ -1,5 +1,5 @@
 #include <Wire.h>
-
+int t=0;
 void setup(){
   Serial.begin(9600);
   Wire.begin();
@@ -14,4 +14,6 @@ void loop(){
     delayMicroseconds(100);
     digitalWrite(6, LOW);
     delayMicroseconds(900);
+    t=t+1;
+    Serial.println(t);
 }
